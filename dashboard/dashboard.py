@@ -25,27 +25,27 @@ st.markdown("""
     Nah, selain kedua itu saya juga akan memaparkan analisis lainnya, yukk langsung saja scroll! ^^
     """)
 
-def create_daily_sewa_df(df):
-    daily_sewa_df = df.groupby('dteday').agg({
+def sewa_hariandf(df):
+    sewa_harian_df = df.groupby('dteday').agg({
         "cnt": "sum", 
         "temp" : "mean"
     }).reset_index()
 
-    daily_sewa_df.rename(columns={
+    sewa_harian_df.rename(columns={
         "cnt": "total_sewa",
         "temp": "average_suhu"
     }, inplace= True) 
 
-    return daily_sewa_df
+    return sewa_harian_df
 
 datetime_columns = ["dteday"]
 all_data['dteday'] = pd.to_datetime(all_data['dteday'])
 
 # Side bar 
 st.sidebar.header("Pengaturan Dashboard")
-st.sidebar.markdown("Silahkan Gunakan Pengaturan Di Bawah Ini Sebagai Filter ^^")
+st.sidebar.markdown("Silahkan Gunakan Pengaturan Di Bawah Ini Sebagai Filter ^_^")
 
-main_date = all_data['dteday'].min()
+min_date = all_data['dteday'].min()
 max_date = all_data['dteday'].max()
 
 with st.sidebar:
@@ -58,6 +58,7 @@ with st.sidebar:
         max_value=max_date,
         value=[min_date,max_date]
     )
+
 start_date = pd.to_datetime(start_date)
 end_date = pd.to_datetime(end_date)
 
@@ -65,17 +66,6 @@ main_df = all_data[(all_data['dteday'] >= start_date) & (all_data['dteday'] <= e
 
 st.sidebar.subheader("Filter Berdasarkan Bulan atau Tahun")
 # end side bar
-
-st.subheader("Key Matrics")
-col1, col2 = st.columns(2)
-
-with col1:
-    total_sewa = main_df['cnt'].sum()
-    st.metric("Total Sewa", value=format_currency(total_sewa, 'IDR', locale='id_ID'))
-
-with col2:
-    avg_suhu = main_df['temp'].mean()
-    st.metric("Average Suhu", value=f"{avg_suhu:.2f} °C")
 
 # Line Chart untukk penyewaan daily
 st.subheader("Sewa Harian")
@@ -86,12 +76,12 @@ ax.set_ylabel("Sewa Harian", fontsize=20)
 st.pyplot(fig)    
 
 # pertanyaan nomor 1 
-season_mapping = {1: "Musim Dingin", 2: "Musim Semi", 3: "Musim Panas", 4: "Musim Gugur"}
-all_data['season'] = all_data['season'].map(season_mapping)
+musim = {1: "Musim Dingin", 2: "Musim Semi", 3: "Musim Panas", 4: "Musim Gugur"}
+all_data['season'] = all_data['season'].map(musim)
 
 st.subheader("Kapan waktu paling banyak penyewaan sepeda berdasarkan musim?")
 fig, ax = plt.subplots(figsize=(10,6))
-sns.barplot(x="season", y="cnt", data=all_data, palette="coolwarm", ax=ax)
+sns.barplot(x="season", y="cnt", hue="season", data=all_data, palette="coolwarm", ax=ax)
 ax.set_title("Penyewaan Berdasarkan Musim")
 ax.set_xlabel("season", fontsize=14)
 ax.set_ylabel("Total Sewa", fontsize=14)
@@ -114,21 +104,19 @@ st.text("""regresi antara suhu dan penyewaan sepeda menunjukkan hasil yang posit
         itu di karenakan cuaca yang nyaman untuk melakukan aktifitas luar ruangan.
     """)
 
-# Informasi tambahan dan catatan
-st.subheader("Analisis dan Insight")
+# catatan bawah
+st.subheader("Insight: ")
 st.markdown("""
-    - **Recency** menggambarkan waktu terakhir pelanggan melakukan penyewaan sepeda. Semakin rendah nilai recency, semakin baru aktivitas pelanggan.
-    - **Frequency** menggambarkan jumlah total penyewaan sepeda dalam periode yang ditentukan. Semakin tinggi nilai frequency, semakin sering pelanggan menggunakan layanan penyewaan.
-    - **Monetary** mengukur jumlah total penyewaan dalam suatu periode waktu, yang mencerminkan seberapa banyak uang yang dihasilkan dari setiap bulannya.
+    - **Recency** menggambarkan waktu terakhir pelanggan menyewa sepeda. Semakin rendah nilai recency, semakin baru aktivitas pelanggan.
+    - **Frequency** menggambarkan jumlah total sewa sepeda dalam waktu yang sudah ditentukan. Semakin tinggi nilai frequency, semakin sering pelanggan menyewa.
+    - **Monetary** mengukur jumlah total penyewaan dalam suatu waktu, yang menghitung seberapa banyak uang yang dihasilkan dari setiap bulannya.
 """)
 
 # RFM Analisinya
 st.subheader("Analisis Recency, Frequency, dan Monetary (RFM)")
 
 all_data['dteday'] = pd.to_datetime(all_data['dteday'])
-
 last_date = all_data['dteday'].max()
-
 all_data['recency'] = (last_date - all_data['dteday']).dt.days
 
 # Frequency
@@ -141,18 +129,18 @@ monetary = all_data.groupby('month')['cnt'].sum()
 # Recency
 recency = all_data.groupby('month')['recency'].min()
 
-# Gabungkan
+# Gabungkan ketiganya
 rfm = pd.DataFrame({
     'recency': recency,
     'frequency': frequency,
     'monetary': monetary
 }).reset_index()
 
-selected_month = st.sidebar.selectbox("Pilih Bulan", pd.to_datetime(all_data['dteday']).dt.month.unique())
-filtered_data = all_data[all_data['dteday'].dt.month == selected_month]
+pilih_bulan = st.sidebar.selectbox("Pilih Bulan", pd.to_datetime(all_data['dteday']).dt.month.unique())
+filter_data = all_data[all_data['dteday'].dt.month == pilih_bulan]
 
-st.subheader(f"Data Penyewaan Sepeda untuk Bulan {selected_month}")
-st.write(filtered_data)
+st.subheader(f"Data Penyewaan Sepeda untuk Bulan {pilih_bulan}")
+st.write(filter_data)
 
 # Footer
-st.caption('Copyright © Jiannala 2025')
+st.caption('Jiannala 2025')
