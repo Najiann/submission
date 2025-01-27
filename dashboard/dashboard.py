@@ -79,6 +79,7 @@ all_data['season'] = all_data['season'].map(musim)
 
 st.subheader("Kapan waktu paling banyak penyewaan sepeda berdasarkan musim?")
 fig, ax = plt.subplots(figsize=(10,6))
+
 sns.barplot(x="season", y="cnt", data=all_data, color="skyblue", ax=ax)
 ax.set_title("Penyewaan Berdasarkan Musim")
 ax.set_xlabel("Musim", fontsize=12)
@@ -169,4 +170,6 @@ with st.expander("See explanation"):
     """)
 
 # Footer
+
 st.caption('Jiannala 2025')
+
